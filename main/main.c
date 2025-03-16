@@ -18,11 +18,11 @@ const char *MONTHS[] = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junh
 
 void echo_irq_handler(uint gpio, uint32_t events) {
 
-    float distance = 0.0;
+    float distance;
 
-    uint32_t start_echo = 0;
-    uint32_t end_echo = 0;
-    uint32_t duration = 0; 
+    uint32_t start_echo;
+    uint32_t end_echo;
+    uint32_t duration; 
     
     if (events & GPIO_IRQ_EDGE_RISE) {
         start_echo = time_us_32();

@@ -20,7 +20,7 @@ void echo_irq_handler(uint gpio, uint32_t events) {
 
     float distance;
 
-    uint32_t start_echo;
+    uint32_t start_echo = 0.0;
     uint32_t end_echo;
     uint32_t duration; 
     

@@ -10,16 +10,19 @@
 
 volatile bool reading_active = false;
 volatile bool timer_fired = false;
-volatile uint32_t start_echo = 0;
-volatile uint32_t end_echo = 0;
-volatile uint32_t duration = 0;
-volatile float distance = 0.0;
+
 volatile alarm_id_t alarm_id;
 
 const char *DAYS_OF_WEEK[] = {"Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"};
 const char *MONTHS[] = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
 void echo_irq_handler(uint gpio, uint32_t events) {
+
+    float distance = 0.0;
+
+    uint32_t start_echo = 0;
+    uint32_t end_echo = 0;
+    uint32_t duration = 0; 
     
     if (events & GPIO_IRQ_EDGE_RISE) {
         start_echo = time_us_32();

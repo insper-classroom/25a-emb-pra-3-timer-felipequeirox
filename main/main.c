@@ -48,6 +48,7 @@ int64_t alarm_callback(alarm_id_t id, void *user_data) {
     printf("%s, %02d de %s %02d:%02d:%02d - Falha\n",
            DAYS_OF_WEEK[dt.dotw], dt.day, MONTHS[dt.month - 1],
            dt.hour, dt.min, dt.sec);
+           
     return 0;  
 }
 

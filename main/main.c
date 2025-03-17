@@ -8,10 +8,10 @@
 #define TRIGGER_PIN 16
 #define ECHO_PIN 17
 
-volatile bool reading_active = false;
 volatile bool fail = false;
 volatile bool data = false;
 volatile uint32_t start_echo = 0;
+
 volatile alarm_id_t alarm_id;
 
 volatile float distance = 0.0;
@@ -83,6 +83,8 @@ int main() {
 
     printf("Digite 'S' para iniciar, 'P' para parar.\n");
 
+    bool reading_active = false;
+
     while (true) {
         
         int c = getchar_timeout_us(1000);
@@ -118,6 +120,6 @@ int main() {
             fail = false;  
         }
 
-        sleep_ms(1000);  
+        sleep_ms(800);  
     }
 }

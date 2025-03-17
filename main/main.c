@@ -11,53 +11,59 @@
 volatile bool fail = false;
 volatile bool data = false;
 volatile uint32_t start_echo = 0;
-
-volatile alarm_id_t alarm_id;
-
 volatile float distance = 0.0;
-
 
 const char *DAYS_OF_WEEK[] = {"Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"};
 const char *MONTHS[] = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
-void echo_irq_handler(uint gpio, uint32_t events) {
+// Callback do timer: define falha se o sensor não responder
+int64_t alarm_callback(alarm_id_t id, void *user_data) {
+    *(bool *)user_data = true;  // Define a variável 'fail' como true
+    return 0;
+}
 
+// IRQ do sensor ultrassônico
+void echo_irq_handler(uint gpio, uint32_t events) {
+    static alarm_id_t alarm_id = -1;  // Variável local estática para armazenar o ID do alarme
     uint32_t end_echo;
-    uint32_t duration; 
-    
+    uint32_t duration;
+
     if (events & GPIO_IRQ_EDGE_RISE) {
         start_echo = time_us_32();
-        fail = false; 
-    } else if (events & GPIO_IRQ_EDGE_FALL) {
+        fail = false;
+    } 
+    else if (events & GPIO_IRQ_EDGE_FALL) {
         end_echo = time_us_32();
 
         if (start_echo > 0) {  
             duration = end_echo - start_echo;
             distance = (duration * 0.034) / 2; 
-            data = true;  
+            data = true;
         }
-        
-        cancel_alarm(alarm_id);
+
+        if (alarm_id != -1) {
+            cancel_alarm(alarm_id);  // Cancela o alarme caso o sensor tenha respondido
+            alarm_id = -1;
+        }
     }
 }
 
-int64_t alarm_callback(alarm_id_t id, void *user_data) {
-    fail = true;
-    return 0;  
-}
-
+// Dispara o trigger do sensor e define um alarme para detectar falha
 void trigger_sensor() {
+    static alarm_id_t alarm_id = -1;  // Variável local estática para armazenar o ID do alarme
+
     gpio_put(TRIGGER_PIN, 1);
-    sleep_us(15);  
+    sleep_us(15);
     gpio_put(TRIGGER_PIN, 0);
 
-    alarm_id = add_alarm_in_ms(100, alarm_callback, NULL, false);
+    // Criar um alarme para detectar falha após 100ms
+    if (alarm_id == -1) {
+        alarm_id = add_alarm_in_ms(100, alarm_callback, (void *)&fail, false);
+    }
 }
 
 int main() {
-    
     stdio_init_all();
-
     rtc_init();
 
     datetime_t datetime = {
@@ -86,7 +92,6 @@ int main() {
     bool reading_active = false;
 
     while (true) {
-        
         int c = getchar_timeout_us(1000);
 
         if (c == 'S') {
@@ -102,24 +107,26 @@ int main() {
         }
 
         if (data) {
-            
             datetime_t dt;
             rtc_get_datetime(&dt);
             
-            printf("%s, %02d de %s %02d:%02d:%02d - %.2f cm\n", DAYS_OF_WEEK[dt.dotw], dt.day, MONTHS[dt.month - 1], dt.hour, dt.min, dt.sec, distance);
+            printf("%s, %02d de %s %02d:%02d:%02d - %.2f cm\n", 
+                   DAYS_OF_WEEK[dt.dotw], dt.day, MONTHS[dt.month - 1], 
+                   dt.hour, dt.min, dt.sec, distance);
             
             data = false; 
-            
-        } else if (fail) {
-            
+        } 
+        else if (fail) {
             datetime_t dt;
             rtc_get_datetime(&dt);
             
-            printf("%s, %02d de %s %02d:%02d:%02d - Falha\n", DAYS_OF_WEEK[dt.dotw], dt.day, MONTHS[dt.month - 1], dt.hour, dt.min, dt.sec);
+            printf("%s, %02d de %s %02d:%02d:%02d - Falha\n", 
+                   DAYS_OF_WEEK[dt.dotw], dt.day, MONTHS[dt.month - 1], 
+                   dt.hour, dt.min, dt.sec);
 
             fail = false;  
         }
 
-        sleep_ms(800);  
+        sleep_ms(1000);
     }
 }

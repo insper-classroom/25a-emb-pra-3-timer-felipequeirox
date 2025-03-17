@@ -16,15 +16,14 @@ volatile float distance = 0.0;
 const char *DAYS_OF_WEEK[] = {"Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"};
 const char *MONTHS[] = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
-// Callback do timer: define falha se o sensor não responder
 int64_t alarm_callback(alarm_id_t id, void *user_data) {
-    *(bool *)user_data = true;  // Define a variável 'fail' como true
+    *(bool *)user_data = true;  
     return 0;
 }
 
-// IRQ do sensor ultrassônico
 void echo_irq_handler(uint gpio, uint32_t events) {
-    static alarm_id_t alarm_id = -1;  // Variável local estática para armazenar o ID do alarme
+    
+    static alarm_id_t alarm_id = -1;  
     uint32_t end_echo;
     uint32_t duration;
 
@@ -42,27 +41,26 @@ void echo_irq_handler(uint gpio, uint32_t events) {
         }
 
         if (alarm_id != -1) {
-            cancel_alarm(alarm_id);  // Cancela o alarme caso o sensor tenha respondido
+            cancel_alarm(alarm_id); 
             alarm_id = -1;
         }
     }
 }
 
-// Dispara o trigger do sensor e define um alarme para detectar falha
 void trigger_sensor() {
-    static alarm_id_t alarm_id = -1;  // Variável local estática para armazenar o ID do alarme
+    static alarm_id_t alarm_id = -1; 
 
     gpio_put(TRIGGER_PIN, 1);
     sleep_us(15);
     gpio_put(TRIGGER_PIN, 0);
 
-    // Criar um alarme para detectar falha após 100ms
     if (alarm_id == -1) {
         alarm_id = add_alarm_in_ms(100, alarm_callback, (void *)&fail, false);
     }
 }
 
 int main() {
+    
     stdio_init_all();
     rtc_init();
 
@@ -107,6 +105,7 @@ int main() {
         }
 
         if (data) {
+
             datetime_t dt;
             rtc_get_datetime(&dt);
             
@@ -117,6 +116,7 @@ int main() {
             data = false; 
         } 
         else if (fail) {
+            
             datetime_t dt;
             rtc_get_datetime(&dt);
             
